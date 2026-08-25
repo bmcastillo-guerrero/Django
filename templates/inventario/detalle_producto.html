@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Conversión de frontend/producto.html + js/producto.js:
+- El registro de movimientos se valida y aplica en el servidor (views.detalle_producto).
+- El stock actualizado llega renderizado desde el servidor.
+{% endcomment %}
+{% block titulo %}{{ producto.nombre }} · StockFlow{% endblock %}
+
+{% block contenido %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'lista_productos' %}">Productos</a></li>
+    <li class="breadcrumb-item active">{{ producto.nombre }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card p-4">
+      <h1 class="h4">{{ producto.nombre }}</h1>
+      <p class="text-muted"><code>{{ producto.sku }}</code> · {{ producto.categoria.nombre }}</p>
+      <ul class="list-unstyled">
+        <li><strong>Precio:</strong> ${{ producto.precio }}</li>
+        <li><strong>Stock actual:</strong> {{ producto.stock }} {{ producto.get_unidad_medida_display }}</li>
+        <li><strong>Stock mínimo:</strong> {{ producto.stock_minimo }}</li>
+        <li><strong>Valor en inventario:</strong> ${{ producto.valor_inventario|floatformat:0 }}</li>
+        <li><strong>Estado:</strong>
+          {% if producto.necesita_reposicion %}
+            <span class="badge text-bg-warning">Necesita reposición</span>
+          {% else %}
+            <span class="badge text-bg-success">OK</span>
+          {% endif %}
+        </li>
+      </ul>
+      <div class="d-flex gap-2">
+        <a href="{% url 'editar_producto' producto.pk %}" class="btn btn-outline-secondary">Editar</a>
+        <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-outline-danger">Eliminar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card p-4 mb-4">
+      <h2 class="h5 mb-3">Registrar movimiento de stock</h2>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label" for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+            {{ form.tipo }}
+            {% for error in form.tipo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form.cantidad.id_for_label }}">{{ form.cantidad.label }}</label>
+            {{ form.cantidad }}
+            {% for error in form.cantidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" for="{{ form.observacion.id_for_label }}">{{ form.observacion.label }}</label>
+            {{ form.observacion }}
+            {% for error in form.observacion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+        <button type="submit" class="btn btn-dark mt-3">Registrar movimiento</button>
+      </form>
+    </div>
+
+    <div class="card p-4">
+      <h2 class="h5 mb-3">Historial de movimientos</h2>
+      {% if movimientos %}
+        <table class="table table-sm">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Observación</th></tr></thead>
+          <tbody>
+            {% for mov in movimientos %}
+              <tr>
+                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                <td>
+                  <span class="badge {% if mov.tipo == 'ENTRADA' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ mov.tipo }}</span>
+                </td>
+                <td>{{ mov.cantidad }}</td>
+                <td>{{ mov.observacion|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted mb-0">Aún no hay movimientos para este producto.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

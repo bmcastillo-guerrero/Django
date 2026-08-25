@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Conversión de frontend/productos.html + js/productos.js:
+- El filtrado por texto y categoría lo hace el ORM en views.py (Q objects).
+- La confirmación de eliminación se hace en el servidor (vista eliminar).
+{% endcomment %}
+{% block titulo %}Productos · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Productos</h1>
+  <a href="{% url 'crear_producto' %}" class="btn btn-dark">+ Nuevo producto</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-5">
+    <input type="text" name="q" value="{{ query }}" class="form-control"
+           placeholder="Buscar por nombre o SKU...">
+  </div>
+  <div class="col-md-4">
+    <select name="categoria" class="form-select">
+      <option value="">Todas las categorías</option>
+      {% for categoria in categorias %}
+        <option value="{{ categoria.pk }}"
+                {% if categoria.pk|stringformat:"s" == categoria_id %}selected{% endif %}>
+          {{ categoria.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3 d-grid">
+    <button type="submit" class="btn btn-outline-dark">Filtrar</button>
+  </div>
+</form>
+
+<div class="table-responsive card p-3">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th>SKU</th><th>Nombre</th><th>Categoría</th>
+        <th>Precio</th><th>Stock</th><th>Estado</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if productos %}
+        {% for producto in productos %}
+          <tr>
+            <td><code>{{ producto.sku }}</code></td>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.categoria.nombre }}</td>
+            <td>${{ producto.precio }}</td>
+            <td>{{ producto.stock }} {{ producto.get_unidad_medida_display }}</td>
+            <td>
+              {% if producto.necesita_reposicion %}
+                <span class="badge text-bg-warning">Reponer</span>
+              {% else %}
+                <span class="badge text-bg-success">OK</span>
+              {% endif %}
+              {% if not producto.activo %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'detalle_producto' producto.pk %}" class="btn btn-sm btn-outline-primary">Ver</a>
+              <a href="{% url 'editar_producto' producto.pk %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+              <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No se encontraron productos.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

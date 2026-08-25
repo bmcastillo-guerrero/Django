@@ -1,0 +1,16 @@
+# Entorno virtual (se recrea con requirements.txt)
+venv/
+
+# Cachés de Python
+__pycache__/
+*.pyc
+
+# Base de datos local (se regenera con migrate + seed_datos)
+db.sqlite3
+
+# Archivos sensibles y locales
+.env
+*.log
+
+# Documento de evaluación (material del curso)
+Escala_de_Apreciacion_Django_eva1.pdf

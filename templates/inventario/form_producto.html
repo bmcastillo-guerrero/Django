@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Conversión de frontend/formulario.html + js/formulario.js:
+- La unicidad del SKU la valida el servidor (unique=True en el modelo).
+- Los errores llegan desde Django y se muestran bajo cada campo.
+{% endcomment %}
+{% block titulo %}{{ titulo }} · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card p-4">
+      <h1 class="h4 mb-3">{{ titulo }}</h1>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+          {{ form.nombre }}
+          {% for error in form.nombre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="row">
+          <div class="col-md-7 mb-3">
+            <label class="form-label" for="{{ form.sku.id_for_label }}">{{ form.sku.label }}</label>
+            {{ form.sku }}
+            {% for error in form.sku.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-5 mb-3">
+            <label class="form-label" for="{{ form.categoria.id_for_label }}">{{ form.categoria.label }}</label>
+            {{ form.categoria }}
+            {% for error in form.categoria.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="{{ form.precio.id_for_label }}">{{ form.precio.label }}</label>
+            {{ form.precio }}
+            {% for error in form.precio.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="{{ form.stock.id_for_label }}">{{ form.stock.label }}</label>
+            {{ form.stock }}
+            {% for error in form.stock.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="{{ form.stock_minimo.id_for_label }}">{{ form.stock_minimo.label }}</label>
+            {{ form.stock_minimo }}
+            {% for error in form.stock_minimo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label" for="{{ form.unidad_medida.id_for_label }}">{{ form.unidad_medida.label }}</label>
+            {{ form.unidad_medida }}
+          </div>
+          <div class="col-md-6 mb-3 d-flex align-items-end">
+            <div class="form-check form-switch">
+              {{ form.activo }}
+              <label class="form-check-label" for="{{ form.activo.id_for_label }}">{{ form.activo.label }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+          <button type="submit" class="btn btn-dark">Guardar</button>
+          <a href="{% url 'lista_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

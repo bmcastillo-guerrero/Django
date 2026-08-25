@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Conversión de frontend/index.html + js/dashboard.js a template Django:
+las métricas calculadas en JS ahora llegan como contexto desde views.py.
+{% endcomment %}
+{% block titulo %}Panel · StockFlow{% endblock %}
+
+{% block contenido %}
+<h1 class="h3 mb-4">Panel de inventario</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="fs-3 fw-bold">{{ total_productos }}</div>
+      <div class="text-muted">Productos activos</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="fs-3 fw-bold">{{ total_unidades }}</div>
+      <div class="text-muted">Unidades en stock</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="fs-3 fw-bold">${{ valor_inventario|floatformat:0 }}</div>
+      <div class="text-muted">Valor del inventario</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 text-center">
+      <div class="fs-3 fw-bold text-warning">{{ por_reponer|length }}</div>
+      <div class="text-muted">Por reponer</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card p-4 h-100">
+      <h2 class="h5 mb-3">Alertas de reposición</h2>
+      {% if por_reponer %}
+        {% for producto in por_reponer %}
+          <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+            <div>{{ producto.nombre }} <code class="ms-1">{{ producto.sku }}</code></div>
+            <span class="badge text-bg-warning">{{ producto.stock }} / mín {{ producto.stock_minimo }}</span>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted mb-0">Todo el stock está sobre el mínimo. Sin alertas.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card p-4 h-100">
+      <h2 class="h5 mb-3">Últimos movimientos</h2>
+      {% if ultimos_movimientos %}
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Fecha</th></tr></thead>
+          <tbody>
+            {% for mov in ultimos_movimientos %}
+              <tr>
+                <td>{{ mov.producto.nombre }}</td>
+                <td>
+                  <span class="badge {% if mov.tipo == 'ENTRADA' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ mov.tipo }}</span>
+                </td>
+                <td>{{ mov.cantidad }}</td>
+                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted mb-0">Aún no se registran movimientos.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card p-4 mt-4">
+  <h2 class="h5 mb-3">Categorías</h2>
+  {% for categoria in categorias %}
+    <a href="{% url 'lista_productos' %}?categoria={{ categoria.pk }}"
+       class="badge text-bg-light border me-1 mb-1 text-decoration-none">
+      {{ categoria.nombre }} ({{ categoria.total_productos }})
+    </a>
+  {% empty %}
+    <p class="text-muted mb-0">Sin categorías registradas.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel · StockFlow</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.html">Stock<span>Flow</span></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+            aria-controls="menu" aria-expanded="false" aria-label="Menú">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" href="index.html">Panel</a></li>
+        <li class="nav-item"><a class="nav-link" href="productos.html">Productos</a></li>
+        <li class="nav-item"><a class="nav-link" href="formulario.html">Nuevo producto</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container pb-5">
+  <h1 class="h3 mb-4">Panel de inventario</h1>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold" id="metrica-productos">0</div>
+        <div class="text-muted">Productos activos</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold" id="metrica-unidades">0</div>
+        <div class="text-muted">Unidades en stock</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold" id="metrica-valor">$0</div>
+        <div class="text-muted">Valor del inventario</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 text-center">
+        <div class="fs-3 fw-bold text-warning" id="metrica-alertas">0</div>
+        <div class="text-muted">Por reponer</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card p-4 h-100">
+        <h2 class="h5 mb-3">Alertas de reposición</h2>
+        <div id="lista-alertas"></div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card p-4 h-100">
+        <h2 class="h5 mb-3">Últimos movimientos</h2>
+        <table class="table table-sm align-middle d-none" id="tabla-movimientos">
+          <thead><tr><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Fecha</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="text-muted mb-0 d-none" id="sin-movimientos">Aún no se registran movimientos.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <h2 class="h5 mb-3">Categorías</h2>
+    <div id="lista-categorias"></div>
+  </div>
+</main>
+
+<footer class="text-center text-muted small pb-4">
+  StockFlow · Frontend estático (prototipo para conectar con Django)
+</footer>
+
+<script src="js/datos.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Equivalente al confirm() del frontend, pero resuelto con una vista del servidor.
+{% endcomment %}
+{% block titulo %}Eliminar producto · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card p-4 text-center">
+      <h1 class="h4 mb-3">¿Eliminar este producto?</h1>
+      <p class="mb-1"><strong>{{ producto.nombre }}</strong> <code>({{ producto.sku }})</code></p>
+      <p class="text-muted">Esta acción no se puede deshacer y también borrará su historial de movimientos.</p>
+      <form method="post" onsubmit="return confirm('Confirma la eliminación definitiva.');"
+            class="d-flex justify-content-center gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a href="{% url 'detalle_producto' producto.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
