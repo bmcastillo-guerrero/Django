@@ -14,3 +14,9 @@ db.sqlite3
 
 # Documento de evaluación (material del curso)
 Escala_de_Apreciacion_Django_eva1.pdf
+
+# Archivos de planificación interna, progreso y guías de defensa
+PLAN.md
+PROGRESO.md
+GUIA_RUBRICA.md
+pasos*.md
