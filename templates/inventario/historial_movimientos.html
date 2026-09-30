@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Colección global de movimientos de stock: búsqueda libre, filtro por tipo y paginación.
+La consulta la arma el selector historial_movimientos con select_related.
+{% endcomment %}
+{% block titulo %}Historial de movimientos · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Historial de movimientos</h1>
+    <p class="text-muted small mb-0">{{ total_resultados }} movimiento(s) en esta colección.</p>
+  </div>
+  <a href="{% url 'lista_productos' %}" class="btn btn-outline-dark">Volver al catálogo</a>
+</div>
+
+<div class="card p-3 mb-4 shadow-sm border-0">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-12 col-md-6">
+      <label class="form-label" for="filtro-query">{{ form.query.label }}</label>
+      {{ form.query }}
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label" for="filtro-tipo">{{ form.tipo.label }}</label>
+      {{ form.tipo }}
+    </div>
+    <div class="col-6 col-md-2 d-grid">
+      <button type="submit" class="btn btn-dark">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+<div class="card shadow-sm border-0 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>SKU</th>
+          <th>Tipo</th>
+          <th class="text-end">Cantidad</th>
+          <th class="text-end">Valor</th>
+          <th>Registrado por</th>
+          <th>Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mov in movimientos %}
+          <tr>
+            <td class="small text-nowrap">{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+            <td>
+              <a href="{% url 'detalle_producto' mov.producto.pk %}">{{ mov.producto.nombre }}</a>
+            </td>
+            <td><code class="small">{{ mov.producto.sku }}</code></td>
+            <td>
+              <span class="badge {% if mov.tipo == 'ENTRADA' %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                {{ mov.tipo }}
+              </span>
+            </td>
+            <td class="text-end {% if mov.tipo == 'SALIDA' %}text-danger{% else %}text-success{% endif %}">
+              {% if mov.tipo == 'ENTRADA' %}+{% else %}-{% endif %}{{ mov.cantidad }}
+            </td>
+            <td class="text-end">${{ mov.valor_movimiento|floatformat:0 }}</td>
+            <td class="small text-muted">{{ mov.registrado_por.get_username|default:"sistema" }}</td>
+            <td class="small text-muted">{{ mov.observacion|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">No hay movimientos con esos filtros.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-4" aria-label="Paginación del historial">
+    <ul class="pagination justify-content-center">
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="?query={{ request.GET.query }}&tipo={{ request.GET.tipo }}&page=1">Anterior</a>
+      </li>
+      {% for numero in page_obj.paginator.page_range %}
+        <li class="page-item {% if numero == page_obj.number %}active{% endif %}">
+          <a class="page-link"
+             href="?query={{ request.GET.query }}&tipo={{ request.GET.tipo }}&page={{ numero }}">{{ numero }}</a>
+        </li>
+      {% endfor %}
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link"
+           href="?query={{ request.GET.query }}&tipo={{ request.GET.tipo }}&page={{ page_obj.next_page_number|default:1 }}">
+          Siguiente
+        </a>
+      </li>
+    </ul>
+  </nav>
+{% endif %}
+{% endblock %}

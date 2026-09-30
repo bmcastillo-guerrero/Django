@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Pantalla de acceso de StockFlow:
+- El formulario lo procesa LoginView de django.contrib.auth con nuestro estilo propio.
+- Muestra las cuentas de demostración para que el docente pueda probar los tres roles.
+{% endcomment %}
+{% block titulo %}Iniciar sesión · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card p-4 shadow-sm">
+      <h1 class="h4 mb-1">Iniciar sesión</h1>
+      <p class="text-muted small mb-4">Accede a StockFlow con tu cuenta de la tienda.</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+          {{ form.password }}
+          {% for error in form.password.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        <button type="submit" class="btn btn-dark w-100">Entrar</button>
+      </form>
+
+      <hr class="my-4">
+      <p class="text-center small mb-0">
+        ¿Todavía no tienes cuenta? <a href="{% url 'registro' %}">Crear una</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="card p-3 mt-4 shadow-sm border-0">
+  <h2 class="h6 text-muted">Cuentas de demostración (creadas con <code>crear_roles</code>)</h2>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Usuario</th><th>Rol</th><th>Puede</th></tr></thead>
+      <tbody>
+        <tr><td><code>admin.demo</code></td><td>Administrador</td>
+            <td>Acceso total, incluye el panel /admin/ y la gestión de cuentas</td></tr>
+        <tr><td><code>bodega.demo</code></td><td>Bodeguero</td>
+            <td>Registra movimientos, crea productos y ajusta stock</td></tr>
+        <tr><td><code>ventas.demo</code></td><td>Vendedor</td>
+            <td>Solo consulta el catálogo, los movimientos y las categorías</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

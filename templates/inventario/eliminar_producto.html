@@ -1,17 +1,26 @@
 {% extends 'base.html' %}
 
 {% comment %}
-Equivalente al confirm() del frontend, pero resuelto con una vista del servidor.
+Confirmación de borrado. El borrado se ejecuta con DeleteView de django, que solo
+acepta POST, y muestra cuántos movimientos se perderán por el on_delete=CASCADE.
 {% endcomment %}
-{% block titulo %}Eliminar producto · StockFlow{% endblock %}
+{% block titulo %}{{ titulo }} · StockFlow{% endblock %}
 
 {% block contenido %}
 <div class="row justify-content-center">
-  <div class="col-lg-5">
-    <div class="card p-4 text-center">
+  <div class="col-lg-6">
+    <div class="card p-4 text-center border-danger">
       <h1 class="h4 mb-3">¿Eliminar este producto?</h1>
       <p class="mb-1"><strong>{{ producto.nombre }}</strong> <code>({{ producto.sku }})</code></p>
-      <p class="text-muted">Esta acción no se puede deshacer y también borrará su historial de movimientos.</p>
+      <p class="text-muted">
+        Esta acción no se puede deshacer y también borrará su historial de movimientos.
+      </p>
+
+      <div class="alert alert-warning small">
+        Se eliminarán también <strong>{{ total_movimientos }}</strong> movimiento(s)
+        del historial de este producto.
+      </div>
+
       <form method="post" onsubmit="return confirm('Confirma la eliminación definitiva.');"
             class="d-flex justify-content-center gap-2">
         {% csrf_token %}

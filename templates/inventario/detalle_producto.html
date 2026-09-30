@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
 {% comment %}
-Conversión de frontend/producto.html + js/producto.js:
-- El registro de movimientos se valida y aplica en el servidor (views.detalle_producto).
-- El stock actualizado llega renderizado desde el servidor.
+Ficha del producto con la lógica de negocio en el servidor:
+- El movimiento se procesa en VistaRegistrarMovimiento, que llama al servicio transaccional.
+- El ajuste directo de stock solo aparece para cuentas con el permiso puede_ajustar_stock.
 {% endcomment %}
 {% block titulo %}{{ producto.nombre }} · StockFlow{% endblock %}
 
@@ -32,10 +32,22 @@ Conversión de frontend/producto.html + js/producto.js:
             <span class="badge text-bg-success">OK</span>
           {% endif %}
         </li>
+        <li class="text-muted small">
+          <strong>Alta:</strong> {{ producto.fecha_registro|date:"d/m/Y H:i" }}
+          {% if producto.creado_por %} por {{ producto.creado_por.get_username }}{% endif %}<br>
+          <strong>Última edición:</strong> {{ producto.actualizado_en|date:"d/m/Y H:i" }}
+        </li>
       </ul>
       <div class="d-flex gap-2">
-        <a href="{% url 'editar_producto' producto.pk %}" class="btn btn-outline-secondary">Editar</a>
-        <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-outline-danger">Eliminar</a>
+        {% if puede_gestionar_catalogo %}
+          <a href="{% url 'editar_producto' producto.pk %}" class="btn btn-outline-secondary">Editar</a>
+        {% endif %}
+        {% if puede_eliminar_productos %}
+          <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-outline-danger">Eliminar</a>
+        {% endif %}
+        <a href="{% url 'historial_movimientos' %}?query={{ producto.sku }}" class="btn btn-outline-dark">
+          Ver en historial
+        </a>
       </div>
     </div>
   </div>
@@ -43,50 +55,111 @@ Conversión de frontend/producto.html + js/producto.js:
   <div class="col-lg-7">
     <div class="card p-4 mb-4">
       <h2 class="h5 mb-3">Registrar movimiento de stock</h2>
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% if puede_registrar_movimientos %}
+        {% if form_movimiento.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form_movimiento.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+        <form method="post" action="{% url 'registrar_movimiento' producto.pk %}" novalidate>
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label" for="{{ form_movimiento.tipo.id_for_label }}">
+                {{ form_movimiento.tipo.label }}
+              </label>
+              {{ form_movimiento.tipo }}
+              {% for error in form_movimiento.tipo.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="{{ form_movimiento.cantidad.id_for_label }}">
+                {{ form_movimiento.cantidad.label }}
+              </label>
+              {{ form_movimiento.cantidad }}
+              {% for error in form_movimiento.cantidad.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-md-5">
+              <label class="form-label" for="{{ form_movimiento.observacion.id_for_label }}">
+                {{ form_movimiento.observacion.label }}
+              </label>
+              {{ form_movimiento.observacion }}
+              {% for error in form_movimiento.observacion.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-dark mt-3">Registrar movimiento</button>
+        </form>
+      {% else %}
+        <p class="text-muted mb-0">
+          Tu rol puede consultar el inventario, pero no registrar movimientos de stock.
+        </p>
       {% endif %}
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="row g-2">
-          <div class="col-md-4">
-            <label class="form-label" for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
-            {{ form.tipo }}
-            {% for error in form.tipo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="col-md-3">
-            <label class="form-label" for="{{ form.cantidad.id_for_label }}">{{ form.cantidad.label }}</label>
-            {{ form.cantidad }}
-            {% for error in form.cantidad.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="col-md-5">
-            <label class="form-label" for="{{ form.observacion.id_for_label }}">{{ form.observacion.label }}</label>
-            {{ form.observacion }}
-            {% for error in form.observacion.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-          </div>
-        </div>
-        <button type="submit" class="btn btn-dark mt-3">Registrar movimiento</button>
-      </form>
     </div>
+
+    {% if puede_ajustar_stock %}
+      <div class="card p-4 mb-4 border-warning">
+        <h2 class="h6 mb-3">Ajuste directo de stock</h2>
+        <p class="text-muted small">
+          Reserva para bodegueros y administradores. No genera movimiento en el historial,
+          por eso queda registrado en el archivo de auditoría del servidor.
+        </p>
+        <form method="post" action="{% url 'ajustar_stock' producto.pk %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-3">
+            <label class="form-label" for="{{ form_ajuste.nuevo_stock.id_for_label }}">
+              {{ form_ajuste.nuevo_stock.label }}
+            </label>
+            {{ form_ajuste.nuevo_stock }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="{{ form_ajuste.motivo.id_for_label }}">
+              {{ form_ajuste.motivo.label }}
+            </label>
+            {{ form_ajuste.motivo }}
+          </div>
+          <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-outline-warning">Aplicar ajuste</button>
+          </div>
+        </form>
+      </div>
+    {% endif %}
 
     <div class="card p-4">
       <h2 class="h5 mb-3">Historial de movimientos</h2>
       {% if movimientos %}
-        <table class="table table-sm">
-          <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Observación</th></tr></thead>
-          <tbody>
-            {% for mov in movimientos %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
               <tr>
-                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
-                <td>
-                  <span class="badge {% if mov.tipo == 'ENTRADA' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ mov.tipo }}</span>
-                </td>
-                <td>{{ mov.cantidad }}</td>
-                <td>{{ mov.observacion|default:"—" }}</td>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cant.</th>
+                <th>Observación</th>
+                <th>Registrado por</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {% for mov in movimientos %}
+                <tr>
+                  <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                  <td>
+                    <span class="badge {% if mov.tipo == 'ENTRADA' %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                      {{ mov.tipo }}
+                    </span>
+                  </td>
+                  <td>{{ mov.cantidad }}</td>
+                  <td>{{ mov.observacion|default:"—" }}</td>
+                  <td class="small text-muted">{{ mov.registrado_por.get_username|default:"sistema" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
         <p class="text-muted mb-0">Aún no hay movimientos para este producto.</p>
       {% endif %}

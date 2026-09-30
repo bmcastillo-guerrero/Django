@@ -12,6 +12,13 @@ db.sqlite3
 .env
 *.log
 
+# Archivos generados por las pruebas automatizadas
+registros/
+test_output.txt
+
+# Base de datos de pruebas que crea el runner
+test_*.sqlite3
+
 # Documento de evaluación (material del curso)
 Escala_de_Apreciacion_Django_eva1.pdf
 

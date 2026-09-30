@@ -314,3 +314,57 @@ main {
   border-top: 1px solid var(--sf-border);
   background-color: #ffffff;
 }
+
+/* ===== Unidad 2: sesiones, roles y avatares ===== */
+
+/* Avatar con iniciales mostrado en la barra de navegacion */
+.avatar-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--sf-accent, #0f172a);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Avatar grande de la ficha de perfil */
+.avatar-grande {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background-color: var(--sf-accent, #0f172a);
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* Distintivo del rol dentro del menu de usuario y del perfil */
+.badge-rol {
+  background-color: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35em 0.6em;
+}
+
+/* Boton de cierre de sesion dentro del menu desplegable */
+.dropdown-menu .btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Formularios de acceso: ancho comodo de la tarjeta central */
+.card .form-control,
+.card .form-select {
+  border-radius: 8px;
+}

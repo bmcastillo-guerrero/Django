@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Error 403: la cuenta inició sesión pero su rol no tiene permiso para esta operación.
+{% endcomment %}
+{% block titulo %}Acceso denegado · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card p-5 text-center border-warning">
+      <div class="fs-1 fw-bold text-warning">403</div>
+      <h1 class="h4 mb-2">Acceso denegado</h1>
+      <p class="text-muted">
+        Tu rol de <strong>{{ rol_actual|default:"usuario" }}</strong> no tiene permiso
+        para realizar esta acción.
+      </p>
+      <p class="small text-muted">
+        El intento quedó registrado en la bitácora del servidor. Si crees que es un error,
+        pide a un administrador que revise tu rol en el panel de administración.
+      </p>
+      <a href="{% url 'dashboard' %}" class="btn btn-dark mt-2">Volver al panel</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

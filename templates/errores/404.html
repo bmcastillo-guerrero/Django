@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Error 404: la dirección solicitada no existe en el enrutamiento del proyecto.
+{% endcomment %}
+{% block titulo %}Página no encontrada · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card p-5 text-center">
+      <div class="fs-1 fw-bold text-dark">404</div>
+      <h1 class="h4 mb-2">Página no encontrada</h1>
+      <p class="text-muted">
+        La dirección que buscas no existe o el registro que estabas de consultar fue eliminado.
+      </p>
+      <a href="{% url 'dashboard' %}" class="btn btn-dark mt-2">Volver al panel</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

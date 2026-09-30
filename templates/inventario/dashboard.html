@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% comment %}
 Conversión de frontend/index.html + js/dashboard.js a template Django:
@@ -18,7 +19,7 @@ las métricas calculadas en JS ahora llegan como contexto desde views.py.
   </div>
   <div class="col-md-3">
     <div class="card p-3 text-center">
-      <div class="fs-3 fw-bold">{{ total_unidades }}</div>
+      <div class="fs-3 fw-bold">{{ total_unidades|intcomma }}</div>
       <div class="text-muted">Unidades en stock</div>
     </div>
   </div>
@@ -34,6 +35,13 @@ las métricas calculadas en JS ahora llegan como contexto desde views.py.
       <div class="text-muted">Por reponer</div>
     </div>
   </div>
+</div>
+
+<div class="card p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+  <span class="text-muted small">
+    {{ total_movimientos }} movimiento(s) registrados en el historial.
+  </span>
+  <a href="{% url 'historial_movimientos' %}" class="btn btn-sm btn-outline-dark">Ver historial completo</a>
 </div>
 
 <div class="row g-4">

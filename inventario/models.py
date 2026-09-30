@@ -1,6 +1,18 @@
 # aqui importo las herramientas de modelos y validadores de django
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
+# aqui importo el modelo de usuario para registrar quien creo cada registro
+from django.contrib.auth.models import User
+
+# aqui defino el validador que obliga a escribir el sku siempre en mayusculas y con guiones
+SKU_VALIDATOR = RegexValidator(
+    regex=r'^[A-Z0-9]+(-[A-Z0-9]+)*$',
+    message='El SKU solo admite letras mayúsculas, números y guiones (ejemplo: ABE-1001-AB).',
+)
+
+# aqui defino el nombre de la anotacion que el selector usa para traer el conteo ya calculado
+ANOTACION_PRODUCTOS = 'productos_activos'
+
 
 # aqui defino la clase categoria para clasificar los productos del inventario
 class Categoria(models.Model):
@@ -8,6 +20,15 @@ class Categoria(models.Model):
     nombre = models.CharField(max_length=80, unique=True)
     # aqui defino una descripcion opcional para detallar la categoria
     descripcion = models.TextField(blank=True)
+    # aqui registro que usuario creo la categoria por primera vez
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='categorias_creadas',
+        verbose_name='creado por',
+    )
 
     class Meta:
         # aqui configuro los nombres legibles en singular y plural
@@ -15,6 +36,10 @@ class Categoria(models.Model):
         verbose_name_plural = 'categorías'
         # aqui ordeno alfabeticamente por nombre
         ordering = ['nombre']
+        # aqui defino permisos finos que se asignan despues a los grupos de cada rol
+        permissions = [
+            ('puede_reasignar_categorias', 'Puede cambiar la categoría de un producto'),
+        ]
 
     # aqui defino la representacion en texto del objeto para mostrar su nombre
     def __str__(self):
@@ -23,6 +48,9 @@ class Categoria(models.Model):
     # aqui creo una propiedad calculada para contar cuantos productos tiene esta categoria
     @property
     def total_productos(self):
+        # aqui si la consulta ya trajo la anotacion del selector la reutilizo sin volver a contar
+        if ANOTACION_PRODUCTOS in self.__dict__:
+            return self.__dict__[ANOTACION_PRODUCTOS]
         # aqui ejecuto la operacion de conteo sobre la relacion inversa productos
         return self.productos.count()
 
@@ -40,7 +68,12 @@ class Producto(models.Model):
     # aqui defino el nombre comercial del producto
     nombre = models.CharField(max_length=120)
     # aqui defino el codigo sku unico que identifica al producto en bodega
-    sku = models.CharField(max_length=20, unique=True)
+    sku = models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[SKU_VALIDATOR],
+        help_text='Usa mayúsculas, números y guiones. Ejemplo: ABE-1001-AB.',
+    )
     # aqui relaciono el producto con una categoria usando clave foranea
     # uso on_delete PROTECT para impedir que se borre una categoria si tiene productos asignados
     categoria = models.ForeignKey(
@@ -62,12 +95,28 @@ class Producto(models.Model):
     unidad_medida = models.CharField(max_length=3, choices=UNIDADES, default='UN')
     # aqui guardo automaticamente la fecha y hora de registro del producto
     fecha_registro = models.DateTimeField(auto_now_add=True)
+    # aqui guardo la fecha del ultima edicion para saber cuando cambio el catalogo
+    actualizado_en = models.DateTimeField(auto_now=True, verbose_name='actualizado en')
+    # aqui registro que usuario creo el producto por primera vez
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='productos_creados',
+        verbose_name='creado por',
+    )
     # aqui indico si el producto esta activo o descontinuado
     activo = models.BooleanField(default=True)
 
     class Meta:
         # aqui ordeno los productos para que los mas recientes aparezcan primero
         ordering = ['-fecha_registro']
+        # aqui defino permisos finos para separar la operacion de bodega de la de ventas
+        permissions = [
+            ('puede_ver_precios', 'Puede ver y modificar los precios de venta'),
+            ('puede_ajustar_stock', 'Puede ajustar el stock sin registrar un movimiento'),
+        ]
 
     # aqui retorno el nombre junto con el sku para identificarlo claramente
     def __str__(self):
@@ -121,12 +170,40 @@ class MovimientoStock(models.Model):
     observacion = models.CharField(max_length=200, blank=True)
     # aqui registro la fecha y hora exacta del movimiento de forma automatica
     fecha = models.DateTimeField(auto_now_add=True)
+    # aqui registro que usuario realizo el movimiento para poder auditar el inventario
+    registrado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_registrados',
+        verbose_name='registrado por',
+    )
 
     class Meta:
         # aqui ordeno para mostrar siempre los movimientos mas recientes primero
         ordering = ['-fecha']
         verbose_name_plural = 'movimientos de stock'
+        # aqui defino permisos finos para controlar quien puede modificar el historial
+        permissions = [
+            ('puede_anular_movimiento', 'Puede anular un movimiento de stock'),
+        ]
 
     # aqui defino la representacion en texto del movimiento
     def __str__(self):
         return f'{self.tipo} {self.cantidad} - {self.producto.nombre}'
+
+    # aqui calculo el valor monetario que moverse este movimiento segun el precio actual
+    @property
+    def valor_movimiento(self):
+        # aqui multiplico la cantidad por el precio vigente del producto
+        return self.producto.precio * self.cantidad
+
+    # aqui indica si el movimiento increase o reduce el stock del producto
+    @property
+    def suma_stock(self):
+        # aqui devuelvo la cantidad con signo positivo para entradas
+        if self.tipo == 'ENTRADA':
+            return self.cantidad
+        # aqui devuelvo la cantidad con signo negativo para salidas
+        return -self.cantidad

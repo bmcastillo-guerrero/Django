@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% comment %}
+Error 500: fallo interno del servidor. Deliberadamente no muestra la traza técnica
+porque en producción esa información solo puede verse en el archivo de registros.
+{% endcomment %}
+{% block titulo %}Error del servidor · StockFlow{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card p-5 text-center border-danger">
+      <div class="fs-1 fw-bold text-danger">500</div>
+      <h1 class="h4 mb-2">Error interno del servidor</h1>
+      <p class="text-muted">
+        Ocurrió un problema inesperado y la operación no pudo completarse.
+        La traza técnica quedó guardada en el archivo de auditoría del servidor.
+      </p>
+      <a href="{% url 'dashboard' %}" class="btn btn-dark mt-2">Volver al panel</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
