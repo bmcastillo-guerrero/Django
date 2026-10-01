@@ -5,3 +5,4 @@ django-crispy-forms==2.7
 Faker==40.37.0
 sqlparse==0.6.0
 tzdata==2026.3
+mysqlclient==2.3.0
