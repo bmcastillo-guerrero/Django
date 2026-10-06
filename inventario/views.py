@@ -602,3 +602,10 @@ class VistaAccionMasiva(LoginRequiredMixin, View):
             messages.error(request, 'La acción solicitada no está disponible.')
         # aqui redirijo de vuelta al catalogo para ver el resultado de la accion
         return redirect('lista_productos')
+
+
+# aqui defino la vista para renderizar la interfaz reactiva que consume la api restful mediante javascript
+class VistaCatalogoApi(TemplateView):
+    # aqui defino la plantilla html con fetch para consumo desacoplado
+    template_name = 'inventario/catalogo_api.html'
+

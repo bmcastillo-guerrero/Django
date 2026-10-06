@@ -1,0 +1,413 @@
+{
+	"info": {
+		"_postman_id": "stockflow-api-collection-v3",
+		"name": "StockFlow - Colección API RESTful y JWT",
+		"description": "Colección completa de pruebas para la API RESTful de StockFlow. Incluye autenticación stateless mediante Simple JWT con script automático para capturar y reutilizar el Bearer token, operaciones CRUD sobre Categorías, Productos y Movimientos de Stock, validaciones de negocio en servidor y consulta al servicio externo de proveedores mayoristas.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Autenticación Stateless (JWT)",
+			"item": [
+				{
+					"name": "1.1 Obtener Par de Tokens (Login)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var data = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', data.access);",
+									"    pm.collectionVariables.set('refreshToken', data.refresh);",
+									"    pm.test('Token de acceso obtenido y guardado en variables', function() {",
+									"        pm.expect(data.access).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin.demo\",\n  \"password\": \"Stockflow2026\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/token/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "token", ""]
+						},
+						"description": "Envía credenciales de usuario y recibe un par de tokens JWT (access de 15 min y refresh de 1 día). El script de pruebas guarda el token automáticamente."
+					}
+				},
+				{
+					"name": "1.2 Refrescar Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var data = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', data.access);",
+									"    pm.test('Nuevo Access Token renovado con éxito', function() {",
+									"        pm.expect(data.access).to.be.a('string');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/token/refresh/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "token", "refresh", ""]
+						},
+						"description": "Renueva el access token sin requerir reingreso de contraseña."
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Productos (/api/v1/productos/)",
+			"item": [
+				{
+					"name": "2.1 Listar Productos (Paginado)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/productos/?ordering=-id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "productos", ""],
+							"query": [
+								{
+									"key": "ordering",
+									"value": "-id"
+								}
+							]
+						},
+						"description": "Consulta pública del catálogo de productos con paginación de 10 elementos por página."
+					}
+				},
+				{
+					"name": "2.2 Detalle de Producto",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/productos/1/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "productos", "1", ""]
+						},
+						"description": "Consulta de ficha de producto con campos calculados: categoria_nombre, necesita_reposicion y valor_inventario."
+					}
+				},
+				{
+					"name": "2.3 Crear Producto (Protegido con JWT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Fideos Spaghetti N° 5 400g\",\n  \"sku\": \"FID-5001-CL\",\n  \"categoria\": 1,\n  \"precio\": \"990.00\",\n  \"stock\": 80,\n  \"stock_minimo\": 15,\n  \"unidad_medida\": \"PAQ\",\n  \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/productos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "productos", ""]
+						},
+						"description": "Crea un producto nuevo. Requiere cabecera Authorization: Bearer <token>. Retorna 201 Created."
+					}
+				},
+				{
+					"name": "2.4 Intento Sin Token (Rechazo 401)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Intento no autorizado\",\n  \"sku\": \"NOA-9999-CL\",\n  \"categoria\": 1,\n  \"precio\": \"1000.00\",\n  \"stock\": 10,\n  \"stock_minimo\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/productos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "productos", ""]
+						},
+						"description": "Demuestra la protección IsAuthenticatedOrReadOnly rechazando peticiones anónimas de mutación con 401 Unauthorized."
+					}
+				},
+				{
+					"name": "2.5 Validación: Rechazo de Precio Negativo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Producto Erróneo\",\n  \"sku\": \"ERR-1111-CL\",\n  \"categoria\": 1,\n  \"precio\": \"-2500.00\",\n  \"stock\": 10,\n  \"stock_minimo\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/productos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "productos", ""]
+						},
+						"description": "Demuestra la validación de servidor en ProductoSerializer retornando 400 Bad Request con detalle del error."
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Categorías (/api/v1/categorias/)",
+			"item": [
+				{
+					"name": "3.1 Listar Categorías",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/categorias/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "categorias", ""]
+						},
+						"description": "Entrega las categorías con la propiedad calculada total_productos."
+					}
+				},
+				{
+					"name": "3.2 Crear Categoría (Protegido con JWT)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Congelados y Helados\",\n  \"descripcion\": \"Línea de alimentos y postres bajo cadena de frío\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/categorias/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "categorias", ""]
+						},
+						"description": "Crea una nueva categoría registrada en la base de datos."
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Movimientos de Stock (/api/v1/movimientos/)",
+			"item": [
+				{
+					"name": "4.1 Listar Historial de Movimientos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/movimientos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "movimientos", ""]
+						},
+						"description": "Entrega el registro histórico de entradas y salidas ordenadas por fecha reciente."
+					}
+				},
+				{
+					"name": "4.2 Registrar Movimiento de Entrada",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"producto\": 1,\n  \"tipo\": \"ENTRADA\",\n  \"cantidad\": 20,\n  \"observacion\": \"Reposición semanal vía API\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/movimientos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "movimientos", ""]
+						},
+						"description": "Registra una entrada de stock actualizando atómicamente el stock físico del producto."
+					}
+				},
+				{
+					"name": "4.3 Validación: Rechazo de Salida Superior al Stock",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"producto\": 1,\n  \"tipo\": \"SALIDA\",\n  \"cantidad\": 99999,\n  \"observacion\": \"Intento excesivo\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/movimientos/",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "movimientos", ""]
+						},
+						"description": "Retorna 400 Bad Request demostrando la validación de negocio cruzada."
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Integración API Externa (/api/v1/proveedores/)",
+			"item": [
+				{
+					"name": "5.1 Catálogo General de Proveedores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/proveedores/?limite=6",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "proveedores", ""],
+							"query": [
+								{
+									"key": "limite",
+									"value": "6"
+								}
+							]
+						},
+						"description": "Consulta el catálogo mayorista internacional en vivo provisto por DummyJSON Products."
+					}
+				},
+				{
+					"name": "5.2 Búsqueda de Artículos Mayoristas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/proveedores/?q=phone&limite=5",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "proveedores", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "phone"
+								},
+								{
+									"key": "limite",
+									"value": "5"
+								}
+							]
+						},
+						"description": "Filtra artículos del catálogo de proveedores por palabra clave."
+					}
+				}
+			]
+		}
+	]
+}

@@ -3,6 +3,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
+# aqui importo las vistas de obtencion y refresco de tokens jwt
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 # aqui importo mis vistas de error para responder con la identidad visual de la aplicacion
 from .errores import error_403, error_404, error_500
 
@@ -13,6 +19,13 @@ urlpatterns = [
 
     # aqui conecto la ruta del panel de administracion nativo
     path('admin/', admin.site.urls),
+
+    # aqui conecto los endpoints de autenticacion jwt stateless
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # aqui conecto los endpoints versionados v1 de la api restful de inventario
+    path('api/v1/', include('inventario.api_urls')),
 
     # aqui conecto las rutas del modulo de cuentas antes que inventario para no perder el login
     path('', include('cuentas.urls')),

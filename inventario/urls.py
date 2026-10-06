@@ -11,6 +11,8 @@ urlpatterns = [
 
     # aqui conecto el catalogo de productos con filtros orden y paginacion
     path('productos/', views.VistaListaProductos.as_view(), name='lista_productos'),
+    # aqui conecto la vista interactiva desacoplada que consume la api restful mediante javascript fetch
+    path('catalogo-api/', views.VistaCatalogoApi.as_view(), name='catalogo_api'),
     # aqui conecto la accion masiva de activar o desactivar productos del catalogo
     path('productos/accion-masiva/', views.VistaAccionMasiva.as_view(), name='accion_masiva'),
     # aqui conecto la ruta para el formulario de creacion de producto

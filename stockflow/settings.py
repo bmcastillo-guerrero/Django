@@ -2,6 +2,8 @@
 from django.contrib.messages import constants as messages
 # aqui importo la excepcion propia de django para abortar el arranque con un mensaje claro
 from django.core.exceptions import ImproperlyConfigured
+# aqui importo timedelta para controlar la expiracion de los tokens de autenticacion
+from datetime import timedelta
 # aqui importo mis lectoras de variables de entorno para sacar la configuracion sensible del codigo
 from pathlib import Path
 
@@ -57,6 +59,12 @@ INSTALLED_APPS = [
     # aqui registro los paquetes externos de terceros
     'crispy_forms',
     'crispy_bootstrap5',
+    # aqui cargo django rest framework para exponer la api restful
+    'rest_framework',
+    # aqui cargo el modulo de autenticacion stateless simple jwt
+    'rest_framework_simplejwt',
+    # aqui cargo el motor de filtros avanzados para endpoints
+    'django_filters',
 
     # aqui registro la aplicacion de cuentas que maneja autenticacion sesiones y roles
     'cuentas.apps.CuentasConfig',
@@ -266,3 +274,45 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATA_UPLOAD_MAX_MEMORY_SIZE = leer_entero('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', 2 * 1024 * 1024)
 # aqui limito el tamaño del cuerpo de cada peticion para frenar ataques de tipo fuerza bruta
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+
+# aqui configuro las politicas globales de django rest framework
+REST_FRAMEWORK = {
+    # aqui defino la autenticacion stateless mediante json web tokens
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # aqui defino el permiso global: lectura publica y mutaciones restringidas por token
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
+    # aqui activo la paginacion estandar de 10 elementos por pagina
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    # aqui configuro la limitacion de peticiones throttling para frenar fuerza bruta y dos
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    # aqui establezco las cuotas maximas diarias por ip y por usuario
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+    },
+}
+
+# aqui configuro los parametros criptograficos y de expiracion de simple jwt
+SIMPLE_JWT = {
+    # aqui defino una vida corta de 15 minutos para el access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    # aqui defino una vida de 1 dia para el refresh token de renovacion
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    # aqui uso el algoritmo simetrico estandar hmac-sha256
+    'ALGORITHM': 'HS256',
+    # aqui firmo los tokens con la clave secreta aislada en el entorno
+    'SIGNING_KEY': SECRET_KEY,
+    # aqui establezco el prefijo bearer para la cabecera authorization
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+

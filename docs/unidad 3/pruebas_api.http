@@ -1,0 +1,168 @@
+### ====================================================================
+### StockFlow API RESTful - Pruebas Rápidas de Endpoints (Evaluación 3)
+### ====================================================================
+
+@baseUrl = http://127.0.0.1:8000
+@username = admin.demo
+@password = Stockflow2026
+
+### 1.1 Obtener Par de Tokens JWT (Login Stateless)
+# @name login
+POST {{baseUrl}}/api/token/
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+### Guardar Token de Acceso desde la respuesta
+@token = {{login.response.body.access}}
+@refreshToken = {{login.response.body.refresh}}
+
+
+### 1.2 Refrescar Token de Acceso JWT
+POST {{baseUrl}}/api/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "{{refreshToken}}"
+}
+
+
+### ====================================================================
+### 2. RECURSO: PRODUCTOS (/api/v1/productos/)
+### ====================================================================
+
+### 2.1 Listado Público de Productos (Paginado en JSON, GET 200 OK)
+GET {{baseUrl}}/api/v1/productos/
+Accept: application/json
+
+### 2.2 Búsqueda y Ordenamiento de Productos
+GET {{baseUrl}}/api/v1/productos/?search=arroz&ordering=-precio
+Accept: application/json
+
+### 2.3 Filtrar por Categoría y Estado Activo
+GET {{baseUrl}}/api/v1/productos/?categoria=1&activo=true
+Accept: application/json
+
+### 2.4 Detalle de un Producto Específico (GET 200 OK)
+GET {{baseUrl}}/api/v1/productos/1/
+Accept: application/json
+
+### 2.5 Intento de Creación Anónima (Debe retornar 401 Unauthorized)
+POST {{baseUrl}}/api/v1/productos/
+Content-Type: application/json
+
+{
+  "nombre": "Aceite Maravilla 1L",
+  "sku": "ACE-1001-CL",
+  "categoria": 1,
+  "precio": "2490.00",
+  "stock": 20,
+  "stock_minimo": 5
+}
+
+### 2.6 Creación de Producto Protegida con Token JWT (POST 201 Created)
+POST {{baseUrl}}/api/v1/productos/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Harina Sin Polvos 1kg",
+  "sku": "HAR-1002-CL",
+  "categoria": 1,
+  "precio": "1290.00",
+  "stock": 40,
+  "stock_minimo": 8,
+  "unidad_medida": "UN",
+  "activo": true
+}
+
+### 2.7 Validación en Servidor: Rechazo de Precio Negativo (400 Bad Request)
+POST {{baseUrl}}/api/v1/productos/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Producto Inválido",
+  "sku": "ERR-0001-CL",
+  "categoria": 1,
+  "precio": "-500.00",
+  "stock": 10,
+  "stock_minimo": 2
+}
+
+### 2.8 Actualización Parcial de Producto (PATCH 200 OK)
+PATCH {{baseUrl}}/api/v1/productos/1/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "precio": "1590.00"
+}
+
+
+### ====================================================================
+### 3. RECURSO: CATEGORÍAS (/api/v1/categorias/)
+### ====================================================================
+
+### 3.1 Listar Categorías con Conteo Calculado (GET 200 OK)
+GET {{baseUrl}}/api/v1/categorias/
+Accept: application/json
+
+### 3.2 Crear Nueva Categoría con Token JWT (POST 201 Created)
+POST {{baseUrl}}/api/v1/categorias/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Bebidas y Jugos Naturales",
+  "descripcion": "Línea de bebestibles y refrescos envasados"
+}
+
+
+### ====================================================================
+### 4. RECURSO: MOVIMIENTOS DE STOCK (/api/v1/movimientos/)
+### ====================================================================
+
+### 4.1 Listado de Movimientos de Auditoría (GET 200 OK)
+GET {{baseUrl}}/api/v1/movimientos/
+Accept: application/json
+
+### 4.2 Registrar Entrada de Stock Transaccional (POST 201 Created)
+POST {{baseUrl}}/api/v1/movimientos/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "producto": 1,
+  "tipo": "ENTRADA",
+  "cantidad": 15,
+  "observacion": "Recepción de lote semanal de proveedor"
+}
+
+### 4.3 Validación de Negocio: Rechazo de Salida Superior al Stock (400 Bad Request)
+POST {{baseUrl}}/api/v1/movimientos/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "producto": 1,
+  "tipo": "SALIDA",
+  "cantidad": 99999,
+  "observacion": "Intento de retiro masivo sin respaldo físico"
+}
+
+
+### ====================================================================
+### 5. INTEGRACIÓN API EXTERNA (/api/v1/proveedores/)
+### ====================================================================
+
+### 5.1 Catálogo General de Proveedores Mayoristas (GET 200 OK)
+GET {{baseUrl}}/api/v1/proveedores/?limite=6
+Accept: application/json
+
+### 5.2 Búsqueda de Artículos Mayoristas por Término
+GET {{baseUrl}}/api/v1/proveedores/?q=laptop&limite=5
+Accept: application/json
